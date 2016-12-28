@@ -5,6 +5,7 @@ import Html exposing (Html, beginnerProgram, button, div, h1, img, input, label,
 import Html.Attributes exposing (class, classList, id, name, selected, src, type_)
 import Html.Events exposing (onClick)
 import Html.Events exposing (onClick)
+import Random
 
 
 main : Program Never Model Msg
@@ -169,3 +170,7 @@ getPhotoUrl index =
 
         Nothing ->
             ""
+
+randomPhotoPicker : Random.Generator Int
+randomPhotoPicker =
+    Random.int 0 (Array.length photoArray - 1)
