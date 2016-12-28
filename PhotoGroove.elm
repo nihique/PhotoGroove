@@ -1,7 +1,7 @@
 module PhotoGroove exposing (..)
 
 import Array exposing (Array)
-import Html exposing (Html, beginnerProgram, div, h1, img, text)
+import Html exposing (Html, beginnerProgram, button, div, h1, img, text)
 import Html.Attributes exposing (class, classList, id, src)
 import Html.Events exposing (onClick)
 import Html.Events exposing (onClick)
@@ -37,26 +37,37 @@ model =
     }
 
 
-type alias Message =
+type alias Msg =
     { operation : String
     , data : String
     }
 
 
-update : Message -> Model -> Model
+photoArray : Array Photo
+photoArray =
+    Array.fromList model.photos
+
+
+update : Msg -> Model -> Model
 update msg model =
     case msg.operation of
         "THUMBNAIL_SELECTED" ->
             { model | selectedUrl = msg.data }
 
+        "SURPRISE_ME" ->
+            { model | selectedUrl = "2.jpeg" }
+
         _ ->
             model
 
 
-view : Model -> Html Message
+view : Model -> Html Msg
 view model =
     div [ class "content" ]
         [ h1 [] [ text "Photo Groove" ]
+        , button
+            [ onClick { operation = "SURPRISE_ME", data = "" } ]
+            [ text "Surprise Me!" ]
         , div
             [ id "thumbnails" ]
             (List.map
@@ -71,11 +82,12 @@ view model =
         ]
 
 
+urlPrefix : String
 urlPrefix =
     "http://elm-in-action.com/"
 
 
-viewThumbnail : String -> Photo -> Html Message
+viewThumbnail : String -> Photo -> Html Msg
 viewThumbnail selectedUrl thumbnail =
     img
         [ src (urlPrefix ++ thumbnail.url)
