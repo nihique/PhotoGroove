@@ -7,6 +7,7 @@ import Html.Events exposing (onClick)
 import Html.Events exposing (onClick)
 
 
+main : Program Never Model Msg
 main =
     beginnerProgram
         { model = initialModel
@@ -45,10 +46,10 @@ initialModel =
     }
 
 
-type alias Msg =
-    { operation : String
-    , data : String
-    }
+type Msg
+    = SelectByUrl String
+    | SurpriseMe
+    | SelectSize ThumbnailSize
 
 
 photoArray : Array Photo
@@ -58,15 +59,15 @@ photoArray =
 
 update : Msg -> Model -> Model
 update msg model =
-    case msg.operation of
-        "THUMBNAIL_SELECTED" ->
-            { model | selectedUrl = msg.data }
+    case msg of
+        SelectByUrl url ->
+            { model | selectedUrl = url }
 
-        "SURPRISE_ME" ->
+        SurpriseMe ->
             { model | selectedUrl = "2.jpeg" }
 
-        _ ->
-            model
+        SelectSize size ->
+            { model | chosenSize = size }
 
 
 view : Model -> Html Msg
@@ -88,7 +89,7 @@ urlPrefix =
 viewSurpriseMeButton : Html Msg
 viewSurpriseMeButton =
     button
-        [ onClick { operation = "SURPRISE_ME", data = "" } ]
+        [ onClick SurpriseMe ]
         [ text "Surprise Me!" ]
 
 
@@ -105,7 +106,12 @@ viewThumbnailSizer =
 viewThumbnailSizerRadioButton : ThumbnailSize -> Html Msg
 viewThumbnailSizerRadioButton thumbnailSize =
     label []
-        [ input [ type_ "radio", name "size" ] []
+        [ input 
+            [ type_ "radio"
+            , name "size" 
+            , onClick (SelectSize thumbnailSize)
+            ] 
+            []
         , text (thumbnailSizeToString thumbnailSize)
         ]
 
@@ -126,13 +132,10 @@ viewThumbnail : String -> Photo -> Html Msg
 viewThumbnail selectedUrl thumbnail =
     img
         [ src (urlPrefix ++ thumbnail.url)
-        , onClick
-            { operation = "THUMBNAIL_SELECTED"
-            , data = thumbnail.url
-            }
         , classList
             [ ( "selected", thumbnail.url == selectedUrl )
             ]
+        , onClick (SelectByUrl thumbnail.url)
         ]
         []
 
@@ -145,7 +148,6 @@ viewPhoto selectedUrl =
         ]
         []
 
-
 thumbnailSizeToString : ThumbnailSize -> String
 thumbnailSizeToString thumbnailSize =
     case thumbnailSize of
@@ -157,3 +159,13 @@ thumbnailSizeToString thumbnailSize =
 
         Large ->
             "large"
+
+
+getPhotoUrl : Int -> String
+getPhotoUrl index =
+    case Array.get index photoArray of
+        Just photo ->
+            photo.url
+
+        Nothing ->
+            ""
