@@ -41,12 +41,8 @@ initialModel : Model
 initialModel =
     { chosenSize = Medium
     , errorMessage = Nothing
-    , photos =
-        [ { url = "1.jpeg" }
-        , { url = "2.jpeg" }
-        , { url = "3.jpeg" }
-        ]
-    , selectedUrl = Just "1.jpeg"
+    , photos = []
+    , selectedUrl = Nothing
     }
 
 
@@ -55,11 +51,6 @@ type Msg
     | SelectByIndex Int
     | SurpriseMe
     | SelectSize ThumbnailSize
-
-
-photoArray : Array Photo
-photoArray =
-    Array.fromList initialModel.photos
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -71,13 +62,13 @@ update msg model =
             )
 
         SelectByIndex index ->
-            ( { model | selectedUrl = getPhotoUrl index }
+            ( { model | selectedUrl = getPhotoUrlByIndex index model.photos }
             , Cmd.none
             )
 
         SurpriseMe ->
             ( model
-            , Random.generate SelectByIndex randomGeneratorPhotoIndex
+            , Random.generate SelectByIndex (randomGeneratorPhotoIndex model.photos)
             )
 
         SelectSize size ->
@@ -155,7 +146,7 @@ viewPhoto : Maybe String -> Html Msg
 viewPhoto selectedUrl =
     case selectedUrl of
         Nothing ->
-            div [] []
+            text ""
 
         Just url ->
             img
@@ -183,16 +174,21 @@ thumbnailSizeToString thumbnailSize =
             "large"
 
 
-getPhotoUrl : Int -> Maybe String
-getPhotoUrl index =
-    case Array.get index photoArray of
-        Just photo ->
-            Just photo.url
-
-        Nothing ->
-            Nothing
+randomGeneratorPhotoIndex : List Photo -> Random.Generator Int
+randomGeneratorPhotoIndex photos =
+    Random.int 0 (List.length photos - 1)
 
 
-randomGeneratorPhotoIndex : Random.Generator Int
-randomGeneratorPhotoIndex =
-    Random.int 0 (Array.length photoArray - 1)
+getPhotoUrlByIndex : Int -> List Photo -> Maybe String
+getPhotoUrlByIndex index photos =
+    let
+        photo : Maybe Photo
+        photo =
+            Array.get index (Array.fromList photos)
+    in
+        case photo of
+            Nothing ->
+                Nothing
+
+            Just photo ->
+                Just photo.url
