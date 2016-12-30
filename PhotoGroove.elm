@@ -71,11 +71,9 @@ update msg model =
 
         SurpriseMe ->
             let
-                randomGenerator : Random.Generator Int
                 randomGenerator =
                     Random.int 0 (List.length model.photos - 1)
 
-                command : Cmd Msg
                 command =
                     Random.generate SelectByIndex randomGenerator
             in
