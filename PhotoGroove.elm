@@ -64,16 +64,24 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SelectByUrl url ->
-            ( { model | selectedUrl = url }, Cmd.none )
+            ( { model | selectedUrl = url }
+            , Cmd.none
+            )
 
         SelectByIndex index ->
-            ( { model | selectedUrl = getPhotoUrl index }, Cmd.none )
+            ( { model | selectedUrl = getPhotoUrl index }
+            , Cmd.none
+            )
 
         SurpriseMe ->
-            ( model, Random.generate SelectByIndex randomGeneratorPhotoIndex )
+            ( model
+            , Random.generate SelectByIndex randomGeneratorPhotoIndex
+            )
 
         SelectSize size ->
-            ( { model | chosenSize = size }, Cmd.none )
+            ( { model | chosenSize = size }
+            , Cmd.none
+            )
 
 
 view : Model -> Html Msg
