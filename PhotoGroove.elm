@@ -57,24 +57,32 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SelectByUrl url ->
-            ( { model | selectedUrl = url }
-            , Cmd.none
-            )
+            ( { model | selectedUrl = url }, Cmd.none )
 
         SelectByIndex index ->
-            ( { model | selectedUrl = getPhotoUrlByIndex index model.photos }
-            , Cmd.none
-            )
+            let
+                url =
+                    model.photos
+                        |> Array.fromList
+                        |> Array.get index
+                        |> Maybe.map .url
+            in
+                ( { model | selectedUrl = url }, Cmd.none )
 
         SurpriseMe ->
-            ( model
-            , Random.generate SelectByIndex (photoIndexRandomGenerator model.photos)
-            )
+            let
+                randomGenerator : Random.Generator Int
+                randomGenerator =
+                    Random.int 0 (List.length model.photos - 1)
+
+                command : Cmd Msg
+                command =
+                    Random.generate SelectByIndex randomGenerator
+            in
+                ( model, command )
 
         SelectSize size ->
-            ( { model | chosenSize = size }
-            , Cmd.none
-            )
+            ( { model | chosenSize = size }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -172,16 +180,3 @@ thumbnailSizeToString thumbnailSize =
 
         Large ->
             "large"
-
-
-photoIndexRandomGenerator : List Photo -> Random.Generator Int
-photoIndexRandomGenerator photos =
-    Random.int 0 (List.length photos - 1)
-
-
-getPhotoUrlByIndex : Int -> List Photo -> Maybe String
-getPhotoUrlByIndex index photos =
-    photos
-        |> Array.fromList
-        |> Array.get index
-        |> Maybe.map .url
