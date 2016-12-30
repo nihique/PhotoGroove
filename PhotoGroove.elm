@@ -31,25 +31,27 @@ type alias Photo =
 
 type alias Model =
     { chosenSize : ThumbnailSize
+    , errorMessage : Maybe String
     , photos : List Photo
-    , selectedUrl : String
+    , selectedUrl : Maybe String
     }
 
 
 initialModel : Model
 initialModel =
     { chosenSize = Medium
+    , errorMessage = Nothing
     , photos =
         [ { url = "1.jpeg" }
         , { url = "2.jpeg" }
         , { url = "3.jpeg" }
         ]
-    , selectedUrl = "1.jpeg"
+    , selectedUrl = Just "1.jpeg"
     }
 
 
 type Msg
-    = SelectByUrl String
+    = SelectByUrl (Maybe String)
     | SelectByIndex Int
     | SurpriseMe
     | SelectSize ThumbnailSize
@@ -125,7 +127,7 @@ viewThumbnailSizerRadioButton thumbnailSize =
         ]
 
 
-viewThumbnails : String -> ThumbnailSize -> Html Msg
+viewThumbnails : Maybe String -> ThumbnailSize -> Html Msg
 viewThumbnails selectedUrl chosenSize =
     div
         [ id "thumbnails"
@@ -137,25 +139,30 @@ viewThumbnails selectedUrl chosenSize =
         )
 
 
-viewThumbnail : String -> Photo -> Html Msg
-viewThumbnail selectedUrl thumbnail =
+viewThumbnail : Maybe String -> Photo -> Html Msg
+viewThumbnail selectedUrl photo =
     img
-        [ src (urlPrefix ++ thumbnail.url)
+        [ src (urlPrefix ++ photo.url)
         , classList
-            [ ( "selected", thumbnail.url == selectedUrl )
+            [ ( "selected", selectedUrl == Just photo.url )
             ]
-        , onClick (SelectByUrl thumbnail.url)
+        , onClick (SelectByUrl (Just photo.url))
         ]
         []
 
 
-viewPhoto : String -> Html Msg
+viewPhoto : Maybe String -> Html Msg
 viewPhoto selectedUrl =
-    img
-        [ class "large"
-        , src (urlPrefix ++ "large/" ++ selectedUrl)
-        ]
-        []
+    case selectedUrl of
+        Nothing ->
+            div [] []
+
+        Just url ->
+            img
+                [ class "large"
+                , src (urlPrefix ++ "large/" ++ url)
+                ]
+                []
 
 
 urlPrefix : String
@@ -176,14 +183,14 @@ thumbnailSizeToString thumbnailSize =
             "large"
 
 
-getPhotoUrl : Int -> String
+getPhotoUrl : Int -> Maybe String
 getPhotoUrl index =
     case Array.get index photoArray of
         Just photo ->
-            photo.url
+            Just photo.url
 
         Nothing ->
-            ""
+            Nothing
 
 
 randomGeneratorPhotoIndex : Random.Generator Int
