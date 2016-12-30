@@ -1,7 +1,7 @@
 module PhotoGroove exposing (..)
 
 import Array exposing (Array)
-import Html exposing (Html, beginnerProgram, button, div, h1, img, input, label, text)
+import Html exposing (Html, program, button, div, h1, img, input, label, text)
 import Html.Attributes exposing (class, classList, id, name, selected, src, type_)
 import Html.Events exposing (onClick)
 import Html.Events exposing (onClick)
@@ -10,10 +10,11 @@ import Random
 
 main : Program Never Model Msg
 main =
-    beginnerProgram
-        { model = initialModel
+    program
+        { init = ( initialModel, Cmd.none )
         , view = view
         , update = update
+        , subscriptions = \model -> Sub.none
         }
 
 
@@ -49,6 +50,7 @@ initialModel =
 
 type Msg
     = SelectByUrl String
+    | SelectByIndex Int
     | SurpriseMe
     | SelectSize ThumbnailSize
 
@@ -58,17 +60,20 @@ photoArray =
     Array.fromList initialModel.photos
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SelectByUrl url ->
-            { model | selectedUrl = url }
+            ( { model | selectedUrl = url }, Cmd.none )
+
+        SelectByIndex index ->
+            ( { model | selectedUrl = getPhotoUrl index }, Cmd.none )
 
         SurpriseMe ->
-            { model | selectedUrl = "2.jpeg" }
+            ( model, Random.generate SelectByIndex randomGeneratorPhotoIndex )
 
         SelectSize size ->
-            { model | chosenSize = size }
+            ( { model | chosenSize = size }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -82,11 +87,6 @@ view model =
         ]
 
 
-urlPrefix : String
-urlPrefix =
-    "http://elm-in-action.com/"
-
-
 viewSurpriseMeButton : Html Msg
 viewSurpriseMeButton =
     button
@@ -98,7 +98,7 @@ viewThumbnailSizer : Html Msg
 viewThumbnailSizer =
     div
         [ id "choose-size" ]
-        ( List.map
+        (List.map
             viewThumbnailSizerRadioButton
             [ Small, Medium, Large ]
         )
@@ -107,11 +107,11 @@ viewThumbnailSizer =
 viewThumbnailSizerRadioButton : ThumbnailSize -> Html Msg
 viewThumbnailSizerRadioButton thumbnailSize =
     label []
-        [ input 
+        [ input
             [ type_ "radio"
-            , name "size" 
+            , name "size"
             , onClick (SelectSize thumbnailSize)
-            ] 
+            ]
             []
         , text (thumbnailSizeToString thumbnailSize)
         ]
@@ -149,6 +149,12 @@ viewPhoto selectedUrl =
         ]
         []
 
+
+urlPrefix : String
+urlPrefix =
+    "http://elm-in-action.com/"
+
+
 thumbnailSizeToString : ThumbnailSize -> String
 thumbnailSizeToString thumbnailSize =
     case thumbnailSize of
@@ -171,6 +177,7 @@ getPhotoUrl index =
         Nothing ->
             ""
 
-randomPhotoPicker : Random.Generator Int
-randomPhotoPicker =
+
+randomGeneratorPhotoIndex : Random.Generator Int
+randomGeneratorPhotoIndex =
     Random.int 0 (Array.length photoArray - 1)
