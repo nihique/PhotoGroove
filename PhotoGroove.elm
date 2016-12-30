@@ -68,7 +68,7 @@ update msg model =
 
         SurpriseMe ->
             ( model
-            , Random.generate SelectByIndex (randomGeneratorPhotoIndex model.photos)
+            , Random.generate SelectByIndex (photoIndexRandomGenerator model.photos)
             )
 
         SelectSize size ->
@@ -174,21 +174,14 @@ thumbnailSizeToString thumbnailSize =
             "large"
 
 
-randomGeneratorPhotoIndex : List Photo -> Random.Generator Int
-randomGeneratorPhotoIndex photos =
+photoIndexRandomGenerator : List Photo -> Random.Generator Int
+photoIndexRandomGenerator photos =
     Random.int 0 (List.length photos - 1)
 
 
 getPhotoUrlByIndex : Int -> List Photo -> Maybe String
 getPhotoUrlByIndex index photos =
-    let
-        photo : Maybe Photo
-        photo =
-            Array.get index (Array.fromList photos)
-    in
-        case photo of
-            Nothing ->
-                Nothing
-
-            Just photo ->
-                Just photo.url
+    photos
+        |> Array.fromList
+        |> Array.get index
+        |> Maybe.map .url
