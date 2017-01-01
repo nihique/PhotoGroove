@@ -2,7 +2,7 @@ module PhotoGroove exposing (..)
 
 import Array exposing (Array)
 import Http
-import Html exposing (Html, program, button, div, h1, img, input, label, text)
+import Html exposing (Html, button, div, h1, img, input, label, p, program, text)
 import Html.Attributes exposing (class, classList, id, name, selected, src, type_)
 import Html.Events exposing (onClick)
 import Html.Events exposing (onClick)
@@ -13,7 +13,7 @@ main : Program Never Model Msg
 main =
     program
         { init = ( initialModel, initialCommand )
-        , view = view
+        , view = viewOrError
         , update = update
         , subscriptions = \_ -> Sub.none
         }
@@ -85,7 +85,9 @@ update msg model =
                 )
 
         LoadPhotos (Err _) ->
-            ( model, Cmd.none )
+            ( { model | errorMessage = Just "Error! (Try turning it off and on again)" }
+            , Cmd.none
+            )
 
         SelectByUrl url ->
             ( { model | selectedUrl = url }, Cmd.none )
@@ -112,6 +114,24 @@ update msg model =
 
         SelectSize size ->
             ( { model | chosenSize = size }, Cmd.none )
+
+
+viewOrError : Model -> Html Msg
+viewOrError model =
+    case model.errorMessage of
+        Nothing ->
+            view model
+
+        Just errorMessage ->
+            viewError errorMessage
+
+
+viewError : String -> Html Msg
+viewError errorMessage =
+    div [ class "error-message" ]
+        [ h1 [] [ text "Photo Groove" ]
+        , p [] [ text errorMessage ]
+        ]
 
 
 view : Model -> Html Msg
