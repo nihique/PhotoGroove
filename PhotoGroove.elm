@@ -5,7 +5,6 @@ import Http
 import Html exposing (Html, button, div, h1, img, input, label, p, program, text)
 import Html.Attributes exposing (class, classList, id, name, selected, src, type_)
 import Html.Events exposing (onClick)
-import Html.Events exposing (onClick)
 import Random
 
 
