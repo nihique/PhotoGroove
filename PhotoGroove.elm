@@ -1,6 +1,7 @@
 module PhotoGroove exposing (..)
 
 import Array exposing (Array)
+import Http
 import Html exposing (Html, program, button, div, h1, img, input, label, text)
 import Html.Attributes exposing (class, classList, id, name, selected, src, type_)
 import Html.Events exposing (onClick)
@@ -11,11 +12,18 @@ import Random
 main : Program Never Model Msg
 main =
     program
-        { init = ( initialModel, Cmd.none )
+        { init = ( initialModel, initialCommand )
         , view = view
         , update = update
-        , subscriptions = \model -> Sub.none
+        , subscriptions = \_ -> Sub.none
         }
+
+
+initialCommand : Cmd Msg
+initialCommand =
+    urlPhotos
+        |> Http.getString
+        |> Http.send LoadPhotos
 
 
 type ThumbnailSize
@@ -47,7 +55,8 @@ initialModel =
 
 
 type Msg
-    = SelectByUrl (Maybe String)
+    = LoadPhotos (Result Http.Error String)
+    | SelectByUrl (Maybe String)
     | SelectByIndex Int
     | SurpriseMe
     | SelectSize ThumbnailSize
@@ -56,6 +65,28 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        LoadPhotos (Ok photosString) ->
+            let
+                photos =
+                    photosString
+                        |> String.split ","
+                        |> List.map Photo
+
+                selectedUrl =
+                    photos
+                        |> List.head
+                        |> Maybe.map .url
+            in
+                ( { model
+                    | photos = photos
+                    , selectedUrl = selectedUrl
+                  }
+                , Cmd.none
+                )
+
+        LoadPhotos (Err _) ->
+            ( model, Cmd.none )
+
         SelectByUrl url ->
             ( { model | selectedUrl = url }, Cmd.none )
 
@@ -72,7 +103,7 @@ update msg model =
         SurpriseMe ->
             let
                 randomGenerator =
-                    Random.int 0 (List.length model.photos - 1)
+                    Random.int 0 <| List.length model.photos - 1
 
                 command =
                     Random.generate SelectByIndex randomGenerator
@@ -89,7 +120,7 @@ view model =
         [ h1 [] [ text "Photo Groove" ]
         , viewSurpriseMeButton
         , viewThumbnailSizer
-        , viewThumbnails model.selectedUrl model.chosenSize
+        , viewThumbnails model.selectedUrl model.chosenSize model.photos
         , viewPhoto model.selectedUrl
         ]
 
@@ -124,15 +155,15 @@ viewThumbnailSizerRadioButton thumbnailSize =
         ]
 
 
-viewThumbnails : Maybe String -> ThumbnailSize -> Html Msg
-viewThumbnails selectedUrl chosenSize =
+viewThumbnails : Maybe String -> ThumbnailSize -> List Photo -> Html Msg
+viewThumbnails selectedUrl chosenSize photos =
     div
         [ id "thumbnails"
         , class (thumbnailSizeToString chosenSize)
         ]
         (List.map
             (viewThumbnail selectedUrl)
-            initialModel.photos
+            photos
         )
 
 
@@ -157,14 +188,9 @@ viewPhoto selectedUrl =
         Just url ->
             img
                 [ class "large"
-                , src (urlPrefix ++ "large/" ++ url)
+                , src <| urlPrefix ++ "large/" ++ url
                 ]
                 []
-
-
-urlPrefix : String
-urlPrefix =
-    "http://elm-in-action.com/"
 
 
 thumbnailSizeToString : ThumbnailSize -> String
@@ -178,3 +204,13 @@ thumbnailSizeToString thumbnailSize =
 
         Large ->
             "large"
+
+
+urlPrefix : String
+urlPrefix =
+    "http://elm-in-action.com/"
+
+
+urlPhotos : String
+urlPhotos =
+    "http://elm-in-action.com/photos/list"
