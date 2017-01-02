@@ -3,7 +3,7 @@ module PhotoGroove exposing (..)
 import Array exposing (Array)
 import Http
 import Html exposing (Html, button, div, h1, img, input, label, p, program, text)
-import Html.Attributes exposing (class, classList, id, name, selected, src, type_)
+import Html.Attributes exposing (class, classList, id, name, selected, src, title, type_)
 import Html.Events exposing (onClick)
 import Json.Decode exposing (Decoder, int, list, string)
 import Json.Decode.Pipeline exposing (decode, optional, required)
@@ -197,6 +197,7 @@ viewThumbnail : Maybe String -> Photo -> Html Msg
 viewThumbnail selectedUrl photo =
     img
         [ src (urlPrefix ++ photo.url)
+        , title (photo.title ++ " [" ++ toString photo.size ++ " KB]")
         , classList
             [ ( "selected", selectedUrl == Just photo.url )
             ]
