@@ -5,6 +5,8 @@ import Http
 import Html exposing (Html, button, div, h1, img, input, label, p, program, text)
 import Html.Attributes exposing (class, classList, id, name, selected, src, type_)
 import Html.Events exposing (onClick)
+import Json.Decode exposing (Decoder, int, list, string)
+import Json.Decode.Pipeline exposing (decode, optional, required)
 import Random
 
 
@@ -20,8 +22,8 @@ main =
 
 initialCommand : Cmd Msg
 initialCommand =
-    urlPhotos
-        |> Http.getString
+    list photoDecoder
+        |> Http.get urlPhotos
         |> Http.send LoadPhotos
 
 
@@ -33,7 +35,17 @@ type ThumbnailSize
 
 type alias Photo =
     { url : String
+    , size : Int
+    , title : String
     }
+
+
+photoDecoder : Decoder Photo
+photoDecoder =
+    decode Photo
+        |> required "url" string
+        |> required "size" int
+        |> optional "title" string "(untitled)"
 
 
 type alias Model =
@@ -54,7 +66,7 @@ initialModel =
 
 
 type Msg
-    = LoadPhotos (Result Http.Error String)
+    = LoadPhotos (Result Http.Error (List Photo))
     | SelectByUrl (Maybe String)
     | SelectByIndex Int
     | SurpriseMe
@@ -64,13 +76,8 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        LoadPhotos (Ok photosString) ->
+        LoadPhotos (Ok photos) ->
             let
-                photos =
-                    photosString
-                        |> String.split ","
-                        |> List.map Photo
-
                 selectedUrl =
                     photos
                         |> List.head
@@ -232,4 +239,4 @@ urlPrefix =
 
 urlPhotos : String
 urlPhotos =
-    "http://elm-in-action.com/photos/list"
+    "http://elm-in-action.com/photos/list.json"
